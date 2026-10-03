@@ -28,6 +28,8 @@ const AUTH_MESSAGES: Record<string, string> = {
   'auth/invalid-email': 'That email address looks invalid.',
   'auth/too-many-requests': 'Too many attempts. Wait a minute and try again.',
   'auth/network-request-failed': 'Network error. Check your connection.',
+  'auth/configuration-not-found': 'Sign-in is not configured for this Firebase project (enable Authentication → Email/Password).',
+  'auth/operation-not-allowed': 'Email/password sign-in is disabled for this Firebase project.',
 }
 
 export function authErrorMessage(err: unknown) {
