@@ -1,0 +1,40 @@
+rules_version = '2';
+
+// Read model: clients read their own data directly (realtime listeners).
+// Write model: every mutation goes through the `api` Cloud Function, which
+// validates input, hashes file blobs and keeps manifests/snapshots consistent.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function ownsProject(projectId) {
+      return signedIn()
+        && get(/databases/$(database)/documents/projects/$(projectId)).data.ownerId == request.auth.uid;
+    }
+
+    // Public connection summary (location name etc). OAuth tokens live in
+    // `hlTokens`, which is never readable by clients.
+    match /users/{uid} {
+      allow read: if signedIn() && request.auth.uid == uid;
+      allow write: if false;
+    }
+
+    match /projects/{projectId} {
+      allow read: if signedIn() && resource.data.ownerId == request.auth.uid;
+      allow write: if false;
+
+      // files blobs, snapshots, messages, generations
+      match /{subcollection}/{docId} {
+        allow read: if ownsProject(projectId);
+        allow write: if false;
+      }
+    }
+
+    // hlTokens, oauthStates, rateLimits and anything else: server only.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
