@@ -7,7 +7,7 @@ Describe a HighLevel app in chat and Genesis writes the code. The code streams i
 | **App (Firebase Hosting)** | https://genesis-v2-b77b9.web.app |
 | **Cloud Functions base URL** | https://us-central1-genesis-v2-b77b9.cloudfunctions.net/api |
 | **OAuth redirect URI** | https://genesis-v2-b77b9.web.app/api/oauth/callback |
-| **Loom walkthrough** | _TODO: add link_ |
+| **Loom walkthrough** | https://www.loom.com/share/ac3461a1964b473d8b3424b4763898d7 |
 
 Stack: Vue 3 + TypeScript + shadcn-vue + Monaco · Firebase Auth, Firestore, Cloud Functions (2nd gen) · OpenAI (`openai` SDK, streaming, `gpt-5.5`).
 
