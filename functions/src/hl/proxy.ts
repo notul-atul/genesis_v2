@@ -3,7 +3,7 @@ import { logger } from 'firebase-functions'
 import { APP_SECRET, HL_API_BASE } from '../config.js'
 import { HttpError } from '../lib/errors.js'
 import { enforceMemoryRateLimit } from '../lib/rateLimit.js'
-import { versionFor } from './client.js'
+import { HL_API_VERSION, isTokenRejection } from './client.js'
 import { readPreviewToken } from './previewToken.js'
 import { getValidAccess } from './tokens.js'
 
@@ -51,7 +51,8 @@ export async function hlProxy(req: Request, res: Response) {
       method: req.method,
       headers: {
         Authorization: `Bearer ${access.accessToken}`,
-        Version: req.header('version') ?? versionFor(req.path),
+        // Set server-side: apps generated with an older hl-client.js may send a stale value.
+        Version: HL_API_VERSION,
         Accept: 'application/json',
         ...(hasBody ? { 'Content-Type': 'application/json' } : {}),
       },
@@ -62,9 +63,17 @@ export async function hlProxy(req: Request, res: Response) {
       throw new HttpError(504, 'HL_UNREACHABLE', 'HighLevel did not respond in time')
     })
 
-    if (upstream.status === 401 && attempt === 0) continue // token revoked/rotated early: refresh once
-
     const text = await upstream.text()
+    if (attempt === 0 && upstream.status === 401) {
+      let body: unknown = null
+      try {
+        body = JSON.parse(text)
+      } catch {
+        /* non-JSON body */
+      }
+      if (isTokenRejection(401, body)) continue // token revoked/rotated early: refresh once
+    }
+
     res.status(upstream.status)
     res.set('Content-Type', upstream.headers.get('content-type') ?? 'application/json')
     for (const h of ['retry-after', 'x-ratelimit-remaining', 'x-ratelimit-max']) {

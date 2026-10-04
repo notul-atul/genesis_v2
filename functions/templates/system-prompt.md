@@ -62,12 +62,12 @@ Error handling and UX requirements:
 
 # HighLevel API v2 reference (the only endpoints available)
 
-Base handled by hl-client. Responses are JSON. Fields can be missing or null; always guard (e.g. `contact.firstName ?? ''`).
+Base URL, auth and the `Version: 2021-04-15` header are handled by hl-client. Responses are JSON. Fields can be missing or null; always guard (e.g. `contact.firstName ?? ''`).
 
-## Locations (Version 2021-07-22)
+## Locations
 - `GET /locations/{locationId}` → `{ location: { id, name, timezone, email, phone, address, city, state, country, website } }`
 
-## Contacts (Version 2021-07-22)
+## Contacts
 - `GET /contacts/` query: `locationId` (required), `query` (free-text search over name/email/phone/company), `limit` (1–100, default 20), `startAfterId`, `startAfter` (pagination cursor, both from `meta`).
   → `{ contacts: Contact[], meta: { total, startAfterId, startAfter, nextPageUrl, currentPage, nextPage, prevPage } }`
   Pagination: request the next page with `startAfterId: meta.startAfterId, startAfter: meta.startAfter`; stop when `meta.nextPageUrl` is null/empty or fewer than `limit` contacts were returned. Sorted by date added, newest first.
@@ -76,7 +76,7 @@ Base handled by hl-client. Responses are JSON. Fields can be missing or null; al
 - `PUT /contacts/{contactId}` body: same fields as create but WITHOUT `locationId` → `{ contact: Contact, succeded: boolean }`
 - Contact: `{ id, locationId, firstName, lastName, contactName, email, phone, companyName, tags: string[], source, type ('lead'|'customer'), dateAdded (ISO string), dateUpdated, dnd, assignedTo, address1, city, state, country, postalCode, customFields: [{ id, value }] }`
 
-## Conversations (Version 2021-04-15)
+## Conversations
 - `GET /conversations/search` query: `locationId` (required), `contactId?`, `query?`, `status?` ('all'|'read'|'unread'|'starred'), `limit` (default 20, max 100), `sort` ('asc'|'desc'), `sortBy` ('last_message_date'|'score_profile'), `startAfterDate?` (cursor: the `lastMessageDate` of the last item of the previous page when sorting by last_message_date desc).
   → `{ conversations: Conversation[], total }`
 - Conversation: `{ id, contactId, locationId, fullName, contactName, email, phone, lastMessageBody, lastMessageDate (epoch ms number), lastMessageType ('TYPE_SMS'|'TYPE_EMAIL'|'TYPE_CALL'|'TYPE_WHATSAPP'|'TYPE_FACEBOOK'|'TYPE_INSTAGRAM'|'TYPE_LIVE_CHAT'|...), lastMessageDirection ('inbound'|'outbound'), unreadCount, type, tags, dateAdded, dateUpdated }`
@@ -86,7 +86,7 @@ Base handled by hl-client. Responses are JSON. Fields can be missing or null; al
 - Message: `{ id, conversationId, contactId, body, direction ('inbound'|'outbound'), status, messageType ('TYPE_SMS'|'TYPE_EMAIL'|...), contentType, dateAdded (ISO string), attachments?: string[] }`
 - `POST /conversations/messages` body: `{ type: 'SMS'|'Email'|'WhatsApp'|'Live_Chat', contactId, message, subject? (Email), html? (Email) }` → `{ conversationId, messageId }`. Only implement sending when the user asks for it, and always require an explicit user action (button) to send.
 
-## Calendars (Version 2021-04-15)
+## Calendars
 - `GET /calendars/` query: `locationId` (required) → `{ calendars: [{ id, name, description, calendarType, isActive, slotDuration, slotDurationUnit, widgetSlug }] }`
 - `GET /calendars/events` query: `locationId` (required), `startTime` and `endTime` (epoch milliseconds, as numbers/strings), and exactly one of `calendarId`, `userId` or `groupId` (required).
   → `{ events: Event[] }`

@@ -12,8 +12,8 @@ const config = window.__HL_CONFIG__ || {}
 export const HL_BASE_URL = (config.baseUrl || 'https://services.leadconnectorhq.com').replace(/\/$/, '')
 export const LOCATION_ID = config.locationId || ''
 
-const VERSION_BY_RESOURCE = { conversations: '2021-04-15', calendars: '2021-04-15' }
-const DEFAULT_VERSION = '2021-07-22'
+// HighLevel's v2 API requires this Version header on every request.
+const API_VERSION = '2021-04-15'
 
 export class HLApiError extends Error {
   constructor(message, { status = 0, path = '', body = null } = {}) {
@@ -56,11 +56,10 @@ function errorMessage(body, status) {
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
 /**
- * Low-level request. Sets the correct `Version` header per resource, retries 429/5xx
+ * Low-level request. Sets HighLevel's required `Version` header, retries 429/5xx
  * with backoff (honouring Retry-After, max 2 retries) and throws HLApiError on failure.
  */
 export async function hlRequest(path, { method = 'GET', query, body, version, signal } = {}) {
-  const resource = path.replace(/^\//, '').split(/[/?]/)[0]
   const url = buildUrl(path, query)
   for (let attempt = 0; ; attempt++) {
     let res
@@ -70,7 +69,7 @@ export async function hlRequest(path, { method = 'GET', query, body, version, si
         signal,
         headers: {
           Accept: 'application/json',
-          Version: version || VERSION_BY_RESOURCE[resource] || DEFAULT_VERSION,
+          Version: version || API_VERSION,
           ...(config.token ? { Authorization: `Bearer ${config.token}` } : {}),
           ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
         },
