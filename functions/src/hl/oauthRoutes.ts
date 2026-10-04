@@ -29,7 +29,10 @@ oauthRouter.post('/oauth/start', requireAuth, async (req, res) => {
   url.searchParams.set('redirect_uri', HL_REDIRECT_URI.value())
   url.searchParams.set('scope', HL_SCOPES.join(' '))
   url.searchParams.set('state', state)
-  if (HL_APP_VERSION_ID.value()) url.searchParams.set('version_id', HL_APP_VERSION_ID.value())
+  // HighLevel's marketplace rejects installs without an app version ("No AppVersion Id found").
+  // Client IDs are "<appId>-<suffix>"; an app's first version id equals its app id.
+  const versionId = HL_APP_VERSION_ID.value() || HL_CLIENT_ID.value().split('-')[0]
+  url.searchParams.set('version_id', versionId)
   res.json({ url: url.toString() })
 })
 
